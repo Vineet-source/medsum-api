@@ -5,7 +5,6 @@ from google import genai
 from tavily import TavilyClient
 from langgraph.graph import StateGraph, START, END
 
-# Import your state and tools
 from .state import AgentState
 from .tools import score_article
 
@@ -50,7 +49,6 @@ def critic_agent(state: AgentState):
     return {"verified_sources": verified}
 
 def synthesizer_agent(state: AgentState):
-    # UPDATED: Using Gemini 2.5 Flash
     print("--- AGENT: SYNTHESIZER (GENERATING WITH GEMINI 2.5 FLASH) ---")
     sources = state.get("verified_sources", [])
     query = state["query"]

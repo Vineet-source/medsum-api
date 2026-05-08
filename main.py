@@ -14,7 +14,6 @@ except Exception as e:
 
 app = FastAPI(title="Doctor's Friend Backend")
 
-# 3. CONFIGURE CORS (Prevents "Failed to Fetch" in Flutter)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,7 +34,6 @@ async def ask_doctor_query(question: str):
     inputs = {"query": question}
     
     try:
-        # Run the LangGraph workflow
         result = await app_graph.ainvoke(inputs)
         
         # Ensure we return keys that match your Flutter 'data['summary']'

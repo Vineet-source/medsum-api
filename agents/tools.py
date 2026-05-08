@@ -5,7 +5,6 @@ def score_article(article):
     Logic to pick the 'better' article. 
     A higher score wins.
     """
-    # Start with the AI search engine's base confidence (0-100)
     # Tavily returns 'score' as a float (e.g., 0.85). We convert to 0-100.
     score = article.get("score", 0) * 100 
     url = article.get("url", "").lower()
@@ -22,4 +21,4 @@ def score_article(article):
     if any(d in url for d in ["medium.com", "facebook.com", "reddit.com", "quora.com"]):
         score -= 50
         
-    return min(score, 100) # Cap at 100
+    return min(score, 100) 
