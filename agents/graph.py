@@ -4,6 +4,7 @@ import operator
 from google import genai
 from tavily import TavilyClient
 from langgraph.graph import StateGraph, START, END
+from openai import OpenAI
 
 from .state import AgentState
 from .tools import score_article
@@ -11,7 +12,7 @@ from .tools import score_article
 # 1. Initialize Clients (2026 Modern SDK)
 gen_client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # 2. Define the Agent Nodes
 
 def researcher_agent(state: AgentState):
@@ -95,16 +96,35 @@ def synthesizer_agent(state: AgentState):
         5. FORMAT: Clean Markdown only. No long paragraphs.
         """
 
-        # Using the newest Gemini 2.5 Flash model
+        # ==========================================
+        # 🚀 ATTEMPT 1: Primary AI (Gemini)
+        # ==========================================
+        print("Trying Primary Synthesizer: Gemini...")
         response = gen_client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents=prompt
-)
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
         return {"summary": response.text}
     
-    except Exception as e:
-        print(f"Synthesizer Error: {e}")
-        return {"summary": "Error generating live summary. API limit reached or invalid key."}
+    except Exception as primary_error:
+        print(f"⚠️ Primary AI Failed: {primary_error}. Triggering OpenAI Fallback...")
+        
+        # ==========================================
+        # 🛡️ ATTEMPT 2: Fallback AI (GPT-4o-mini)
+        # ==========================================
+        try:
+            backup_response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a clinical AI synthesizer that outputs strict, concise Markdown."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return {"summary": backup_response.choices[0].message.content}
+
+        except Exception as fallback_error:
+            print(f"❌ Fallback AI also failed: {fallback_error}")
+            return {"summary": "### ⚠️ System Overloaded\nAll AI medical synthesizers are currently busy. Please try again in a few moments."}
 
 # 3. Build the LangGraph Workflow
 workflow = StateGraph(AgentState)
